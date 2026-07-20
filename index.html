@@ -16,6 +16,64 @@
   <body>
     <div id="root"></div>
 
+    <!-- Image fallback: if nexchat-icon.png doesn't load, fall back to nexchat-icon.jpg -->
+    <script>
+      (function() {
+        var ICON_PATTERN = /nexchat-?icon/i;
+
+        function wireFallback(img) {
+          if (img.__nexchatIconWired) return;
+          img.__nexchatIconWired = true;
+          img.addEventListener('error', function onError() {
+            if (img.src && /\.png$/i.test(img.src)) {
+              img.src = img.src.replace(/\.png$/i, '.jpg');
+            }
+          });
+        }
+
+        function scanAndWire(root) {
+          if (!root || !root.querySelectorAll) return;
+          root.querySelectorAll('img').forEach(function(img) {
+            if (ICON_PATTERN.test(img.src || img.getAttribute('src') || '')) {
+              wireFallback(img);
+            }
+          });
+        }
+
+        // Scan existing images when DOM is ready
+        if (document.readyState !== 'loading') {
+          scanAndWire(document);
+        } else {
+          document.addEventListener('DOMContentLoaded', function() {
+            scanAndWire(document);
+          });
+        }
+
+        // Watch for dynamically added images (React mounts dynamically)
+        var mo = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+              if (node.nodeType === 1) {
+                // Check the node itself
+                if (node.tagName === 'IMG' && ICON_PATTERN.test(node.src || node.getAttribute('src') || '')) {
+                  wireFallback(node);
+                }
+                // Check descendants
+                if (node.querySelectorAll) {
+                  node.querySelectorAll('img').forEach(function(img) {
+                    if (ICON_PATTERN.test(img.src || img.getAttribute('src') || '')) {
+                      wireFallback(img);
+                    }
+                  });
+                }
+              }
+            });
+          });
+        });
+        mo.observe(document.documentElement, { childList: true, subtree: true });
+      })();
+    </script>
+
     <!-- APK download fallback (works even if the app JS doesn't wire the install button correctly) -->
     <script>
       (function () {
